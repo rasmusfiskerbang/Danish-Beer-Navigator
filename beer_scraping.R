@@ -215,7 +215,7 @@ beers <- beers %>%
   select(beer_name:type, supertype, alcohol_percent:address, region, lon:link)
 
 # Writing csv
-write_csv(beers, "beers.csv")
+write_csv(beers, "beer_navigator/beers.csv")
 
 
 
