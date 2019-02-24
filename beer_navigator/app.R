@@ -3,9 +3,27 @@ library(shiny)
 library(shinydashboard)
 library(tidyverse)
 library(DT)
+library(leaflet)
 
 beers <- read_csv("beers.csv")
 unique_breweries <- unique(beers$brewery_name)
+
+# Defining colors
+colors <- data.frame(stringsAsFactors=FALSE,
+                     brewery_type = c("Brewpub", "Brewpub/Brewery", "Client Brewer",
+                                      "Commercial Brewery", "Commissioner", "Contract Brewer",
+                                      "Microbrewery", "Missing"),
+                     color = c("e17ac1", "7f7f7f", "fd7f28", "339f34", "d42a2f", "936abb",
+                               "936abb", "8b564c")) %>% 
+  mutate(color = str_c("#",color))
+pal <- colorFactor(colors$color, domain = colors$brewery_type)
+
+# Defining function to add labels
+add_labels <- function(brewery_name, brewery_type, address){
+  str_c("<strong>Brewery name:</strong> ",brewery_name,"<br />",
+        "<strong>Brewery type:</strong> ",brewery_type,"<br />",
+        "<strong>Address:</strong> ",address,"<br />")
+}
 
 
 # Sidebar -----------------------------------------------------------------
@@ -35,11 +53,17 @@ sidebar <- dashboardSidebar(
               multiple = TRUE)
 )
 
-
 # Body --------------------------------------------------------------------
 
 body <- dashboardBody(
-  DT::dataTableOutput("table")  
+  fluidRow(
+    box(
+      leafletOutput("beer_map")
+    )
+  ),
+  fluidRow(
+    DT::dataTableOutput("table_long")      
+  )
 )
 
 
@@ -102,8 +126,8 @@ server <- function(input, output) {
     }
   })
   
-  
-  output$table <- DT::renderDT({
+  # Creating reactive data frame
+  reactive_data <- reactive({
     beers %>% 
       filter(between(rating, input$rating[1], input$rating[2]),
              # Alcohol percent
@@ -116,9 +140,41 @@ server <- function(input, output) {
              ind_beer_type(),
              ind_brewery_region(),
              ind_beer_type(),
-             ind_beer_super_type())
+             ind_beer_super_type())  
+  })
+  
+  # Creating short data frame
+  beers_short <- reactive({
+    reactive_data() %>% 
+      mutate(brewery_type = coalesce(brewery_type, "Missing")) %>% 
+      group_by(brewery_name) %>% 
+      add_count() %>% 
+      ungroup() %>% 
+      select(brewery_name, brewery_type, n_beers = n, est, region, address, lon, lat) %>% 
+      distinct()  
+  })
+  
+  # Printing table
+  output$table_long <- DT::renderDT({
+    reactive_data()  
   }, 
   options = list(scrollX = TRUE))
+  
+  # Printing map
+  output$beer_map <- renderLeaflet({
+    beers_short() %>% 
+      leaflet() %>% 
+      addProviderTiles(providers$CartoDB.Positron) %>% 
+      addCircleMarkers(lng = ~lon, lat = ~lat, radius = ~1.2*log(n_beers)+3,
+                       stroke = FALSE, fillOpacity = 0.8,
+                       color = ~pal(brewery_type),
+                       label = ~lapply(add_labels(brewery_name, brewery_type, address), HTML))
+  })
+  
+  
+  
+  
+  
 }
 
 shinyApp(ui, server)
