@@ -141,7 +141,7 @@ server <- function(input, output) {
              # Establishment
              between(est, input$est[1], input$est[2]),
              ind_brewery_name(),
-             ind_beer_type(),
+             ind_brewery_type(),
              ind_brewery_region(),
              ind_beer_type(),
              ind_beer_super_type())  
