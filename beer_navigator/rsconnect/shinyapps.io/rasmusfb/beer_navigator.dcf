@@ -1,0 +1,13 @@
+name: beer_navigator
+title: beer_navigator
+username:
+account: rasmusfb
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 736347
+bundleId: 1895791
+url: https://rasmusfb.shinyapps.io/beer_navigator/
+when: 1551009107.47001
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app_old.R

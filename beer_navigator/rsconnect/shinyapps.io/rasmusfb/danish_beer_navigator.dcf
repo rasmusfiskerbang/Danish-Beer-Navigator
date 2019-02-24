@@ -1,0 +1,13 @@
+name: danish_beer_navigator
+title: danish_beer_navigator
+username:
+account: rasmusfb
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 736345
+bundleId: 1895808
+url: https://rasmusfb.shinyapps.io/danish_beer_navigator/
+when: 1551009679.29038
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app_old.R
