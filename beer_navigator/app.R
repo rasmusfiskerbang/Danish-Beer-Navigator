@@ -4,6 +4,7 @@ library(shinydashboard)
 library(tidyverse)
 library(DT)
 library(leaflet)
+library(scatterD3)
 
 beers <- read_csv("beers.csv")
 unique_breweries <- unique(beers$brewery_name)
@@ -58,7 +59,10 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
   fluidRow(
     box(
-      leafletOutput("beer_map")
+      leafletOutput("beer_map"), height = 450
+    ),
+    box(
+      scatterD3Output("scatter_plot", height = 400), height = 450
     )
   ),
   fluidRow(
@@ -171,9 +175,26 @@ server <- function(input, output) {
                        label = ~lapply(add_labels(brewery_name, brewery_type, address), HTML))
   })
   
-  
-  
-  
+  # Printing scatter plot
+  output$scatter_plot <- renderScatterD3({
+    
+    tooltip_custom <- str_c("<strong>Brewery name:</strong> ",reactive_data()$brewery_name,"<br />",
+                            "<strong>Brewery type:</strong> ",reactive_data()$brewery_type,"<br />",
+                            "<strong>Beer name:</strong> ",reactive_data()$beer_name,"<br />",
+                            "<strong>Beer type:</strong> ",reactive_data()$type,"<br />",
+                            "<strong>Number of ratings:</strong> ",reactive_data()$number_of_ratings,"<br />")
+    
+    reactive_data() %>% 
+      mutate(number_of_ratings_transformed = sqrt(number_of_ratings)) %>% 
+      as.data.frame() %>% 
+      scatterD3(x = alcohol_percent, y = rating,
+                col_var = brewery_type, size_var = number_of_ratings_transformed,
+                point_opacity = 0.5, hover_opacity = 1,
+                tooltip_text = tooltip_custom, url_var = link,
+                col_lab = "Type of brewery:",
+                size_lab = "Sqrt of number of ratings:",
+                xlab = "Alcohol percent", ylab = "Rating")
+  })
   
 }
 
